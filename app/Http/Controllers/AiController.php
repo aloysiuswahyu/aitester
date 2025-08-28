@@ -48,12 +48,12 @@ class AiController extends Controller
         // return response()->json($response->json());
         // dd($data);
 
-        $courses = DB::table('ai_training_data')->select('*')->limit(2)->get();
+        $query = DB::table('ai_training_data')->select('*')->limit(2)->get();
 
         $context = "";
 
-        foreach ($courses as $course) {
-            $context .= "Title: " . $course->course_title . "\nDescription: " . $course->course_overview . "\n\n";
+        foreach ($query as $data) {
+            $context .= "Title: " . $data->title . "\nDescription: " . $course->description . "\n\n";
         }
 
         $analysis = $agent->askWithData($text, $context);
