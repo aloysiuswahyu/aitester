@@ -1,0 +1,2 @@
+# aitester
+untuk belajar ai
