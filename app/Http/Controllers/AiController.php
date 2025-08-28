@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AiAgent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Shelfwood\LMStudio\LMStudioFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -14,37 +16,52 @@ class AiController extends Controller
         return view('ai');
     }
 
-    public function generate(Request $request)
+    public function generate(Request $request, AiAgent $agent)
     {
-        $text = $request->input('text');
+        try {
+            $text = $request->input('text');
         $cacheKey = 'openai_'.md5(json_encode($text));
 
         // Cek cache selama 1 jam
         // $analysis = Cache::remember($cacheKey, now()->addHour(), function () use ($text) {
-        $client = \OpenAI::client(env('OPENAI_API_KEY'));
-        $response = $client->chat()->create([
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                // ['role' => 'system', 'content' => 'jika yang di input tidak ada hubungan yang menanyakan tentang surveyor  maka output nya bahwa inputan anda tidak dapat di deteksi'],
-                // ['role' => 'assistant',    'content' => 'yang menjawab Siva'],
-                // ['role' => 'developer', 'content' => 'otomatis translate ke bahasa inggris'],
-                ['role' => 'system', 'content' => 'hanya yang berkaitan dengan Katalis dan prospera  respon nya di awalai dengan hello saya iaskills bantu menjawab diluar dari  Katalis dan prospera  respon nya bahwa inputan anda tidak dapat di deteksi'],
-                // ['role' => 'system', 'content' => 'You are Aria, a smart and polite AI assistant. Always respond in English, even if the question is in another language.'],
-                ['role' => 'user', 'content' => $text],
-            ],
-            'max_tokens' => 200,
-        ]);
-        // dd($response);
-        $response->choices[0]->message->content;
+        // $client = \OpenAI::client(env('OPENAI_API_KEY'));
+        // $response = $client->chat()->create([
+        //     'model' => 'gpt-4o-mini',
+        //     'messages' => [
+        //         // ['role' => 'system', 'content' => 'jika yang di input tidak ada hubungan yang menanyakan tentang surveyor  maka output nya bahwa inputan anda tidak dapat di deteksi'],
+        //         // ['role' => 'assistant',    'content' => 'yang menjawab Siva'],
+        //         // ['role' => 'developer', 'content' => 'otomatis translate ke bahasa inggris'],
+        //         ['role' => 'system', 'content' => 'Kamu adalah AI Agent Katalis'],
+        //         // ['role' => 'system', 'content' => 'You are Aria, a smart and polite AI assistant. Always respond in English, even if the question is in another language.'],
+        //         ['role' => 'user', 'content' => $text],
+        //     ],
+        //     'max_tokens' => 200,
+        // ]);
+        // // dd($response);
+        // $response->choices[0]->message->content;
 
-        $analysis = $response->choices[0]->message->content ?? ' tidak dapat di deteksi';
+        // $analysis = $response->choices[0]->message->content ?? ' tidak dapat di deteksi';
+
         // });
 
         // dd($analysis);
         // return response()->json($response->json());
         // dd($data);
 
+        $courses = DB::table('ai_training_data')->select('*')->limit(2)->get();
+
+        $context = "";
+
+        foreach ($courses as $course) {
+            $context .= "Title: " . $course->course_title . "\nDescription: " . $course->course_overview . "\n\n";
+        }
+
+        $analysis = $agent->askWithData($text, $context);
+
         return view('ai', compact('text', 'analysis'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
     }
 
     public function generatelms(Request $request)
