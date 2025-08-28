@@ -53,7 +53,7 @@ class AiController extends Controller
         $context = "";
 
         foreach ($query as $data) {
-            $context .= "Title: " . $data->title . "\nDescription: " . $course->description . "\n\n";
+            $context .= "Title: " . $data->title . "\nDescription: " . $data->description . "\n\n";
         }
 
         $analysis = $agent->askWithData($text, $context);
