@@ -19,8 +19,20 @@
     @if(isset($analysis))
         <div class="alert alert-info mt-4">
             <h5>Hasil Analisis:</h5>
-            <pre>{{ $analysis }}</pre>
+            <pre id="typing"></pre>
         </div>
+        <script>
+        let text = @json($analysis);
+        let i = 0;
+        function typeWriter() {
+            if (i < text.length) {
+                document.getElementById("typing").textContent += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 30);
+            }
+        }
+        typeWriter();
+    </script>
     @endif
 
     @if($errors->any())
